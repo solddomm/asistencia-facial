@@ -1,0 +1,27 @@
+# Entornos virtuales de Python
+.venv/
+venv/
+
+# Variables de entorno / credenciales
+.env
+
+# Archivos generados por Python
+__pycache__/
+*.py[cod]
+
+# Cachés de pruebas
+.pytest_cache/
+
+# Configuración local de editores
+.vscode/
+.idea/
+
+# Datos biométricos locales (si se generan en incrementos futuros)
+data/faces/
+
+# Archivos del sistema operativo
+Thumbs.db
+.DS_Store
+
+# Logs locales
+*.log
