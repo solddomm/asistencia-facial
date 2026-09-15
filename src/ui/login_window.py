@@ -1,54 +1,53 @@
 from PySide6.QtWidgets import (
-    QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox
+    QWidget, QVBoxLayout, QLabel, QLineEdit,
+    QPushButton, QMessageBox
 )
 from repositories.user_repository import UserRepository
-from ui.welcome_window import WelcomeWindow
+from ui.main_window import MainWindow
 
 class LoginWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.repo = UserRepository()
-        self.welcome_window = None
+        self.main_window = None
+
         self.setWindowTitle("Inicio de sesión")
-        self.resize(420, 260)
+        self.resize(360, 260)
 
-        self.identifier_input = QLineEdit()
-        self.identifier_input.setPlaceholderText("Usuario / Email / DNI / CUIL")
+        layout = QVBoxLayout(self)
 
-        self.password_input = QLineEdit()
-        self.password_input.setPlaceholderText("Contraseña")
-        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+        title = QLabel("Inicio de sesión")
+        title.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 10px;")
+        layout.addWidget(title)
 
-        self.login_button = QPushButton("Iniciar sesión")
-        self.login_button.clicked.connect(self.iniciar_sesion)
+        self.input_identificador = QLineEdit()
+        self.input_identificador.setPlaceholderText("Usuario / Email / DNI / CUIL")
+        layout.addWidget(self.input_identificador)
 
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel("Inicio de sesión"))
-        layout.addWidget(self.identifier_input)
-        layout.addWidget(self.password_input)
-        layout.addWidget(self.login_button)
-        self.setLayout(layout)
+        self.input_password = QLineEdit()
+        self.input_password.setPlaceholderText("Contraseña")
+        self.input_password.setEchoMode(QLineEdit.Password)
+        layout.addWidget(self.input_password)
+
+        self.btn_login = QPushButton("Iniciar sesión")
+        self.btn_login.clicked.connect(self.iniciar_sesion)
+        layout.addWidget(self.btn_login)
 
     def iniciar_sesion(self):
-        identificador = self.identifier_input.text().strip()
-        contrasenia = self.password_input.text().strip()
+        identificador = self.input_identificador.text().strip()
+        contrasenia = self.input_password.text().strip()
 
-        if identificador == "" or contrasenia == "":
+        if not identificador or not contrasenia:
             QMessageBox.warning(self, "Datos incompletos", "Ingrese usuario y contraseña.")
             return
 
-        try:
-            user_data = self.repo.find_by_credentials(identificador, contrasenia)
-        except Exception as e:
-            QMessageBox.critical(self, "Error de Conexión", f"Error con la base de datos:\n{str(e)}")
-            return
+        usuario = self.repo.find_by_credentials(identificador, contrasenia)
 
-        if user_data is None:
+        if usuario is None:
             QMessageBox.critical(self, "Error", "Credenciales incorrectas.")
             return
 
-        nombre_mostrar = f"{user_data[5]} {user_data[6]}".strip() or user_data[1]
-
-        self.welcome_window = WelcomeWindow(nombre_mostrar)
-        self.welcome_window.show()
+        # Abre la nueva ventana principal y cierra el login
+        self.main_window = MainWindow(nombre_usuario=usuario[1])
+        self.main_window.show()
         self.close()
