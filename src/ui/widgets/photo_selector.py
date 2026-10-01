@@ -4,22 +4,22 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
+from ui.widgets.camera_capture_dialog import CameraCaptureDialog
 
 class PhotoSelector(QWidget):
     def __init__(self, title):
         super().__init__()
+        self.title = title
         self.image_path = None
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 6, 0, 6)
         main_layout.setSpacing(6)
 
-        # Título sin negrita
         self.title_label = QLabel(title)
         self.title_label.setStyleSheet("color: #212529; font-size: 13px; font-weight: normal;")
         main_layout.addWidget(self.title_label)
 
-        # Contenedor con borde completo y limpio
         container = QFrame()
         container.setStyleSheet("""
             QFrame {
@@ -93,6 +93,7 @@ class PhotoSelector(QWidget):
         main_layout.addWidget(container)
 
         self.btn_cargar.clicked.connect(self.cargar_foto)
+        self.btn_tomar.clicked.connect(self.abrir_captura_camara)
         self.btn_borrar.clicked.connect(self.borrar_foto)
 
     def cargar_foto(self):
@@ -100,13 +101,21 @@ class PhotoSelector(QWidget):
             self, "Seleccionar imagen", "", "Imágenes (*.png *.jpg *.jpeg *.bmp)"
         )
         if file_path:
-            pixmap = QPixmap(file_path)
-            if pixmap.isNull():
-                QMessageBox.critical(self, "Error", "El archivo seleccionado no es una imagen válida.")
-                return
-            self.image_path = file_path
-            self.preview.setPixmap(pixmap.scaled(self.preview.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
-            self.btn_borrar.setVisible(True)
+            self._establecer_imagen(file_path)
+
+    def abrir_captura_camara(self):
+        dialog = CameraCaptureDialog(self, title=f"Capturar - {self.title}")
+        if dialog.exec() == CameraCaptureDialog.Accepted and dialog.saved_image_path:
+            self._establecer_imagen(dialog.saved_image_path)
+
+    def _establecer_imagen(self, file_path):
+        pixmap = QPixmap(file_path)
+        if pixmap.isNull():
+            QMessageBox.critical(self, "Error", "El archivo seleccionado no es una imagen válida.")
+            return
+        self.image_path = file_path
+        self.preview.setPixmap(pixmap.scaled(self.preview.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.btn_borrar.setVisible(True)
 
     def borrar_foto(self):
         self.image_path = None
