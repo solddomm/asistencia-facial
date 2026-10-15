@@ -6,6 +6,7 @@ from ui.pages.attendance_page import AttendancePage
 from ui.pages.horarios_config_page import HorariosConfigPage
 from ui.pages.student_registration_page import StudentRegistrationPage
 
+
 class MainWindow(QMainWindow):
     def __init__(self, nombre_usuario=""):
         super().__init__()
@@ -20,7 +21,7 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(10, 10, 10, 10)
         main_layout.setSpacing(10)
 
-        # Menú lateral
+        # Menú lateral clásico
         menu_widget = QWidget()
         menu_widget.setFixedWidth(240)
         menu_widget.setStyleSheet("""
@@ -53,7 +54,7 @@ class MainWindow(QMainWindow):
         menu_layout.setSpacing(10)
 
         self.user_label = QLabel(f"Bienvenido, {nombre_usuario}")
-        self.user_label.setStyleSheet("font-weight: normal; margin-bottom: 10px;")
+        self.user_label.setStyleSheet("font-weight: bold; margin-bottom: 10px;")
         menu_layout.addWidget(self.user_label)
 
         self.btn_asistencia = QPushButton("Asistencia por Captura Facial")
@@ -67,7 +68,7 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(menu_widget)
 
-        # Contenedor central
+        # Contenedor central de páginas
         self.stack = QStackedWidget()
         self.stack.setStyleSheet("background-color: #ffffff; border: 1px solid #ced4da; border-radius: 4px;")
         main_layout.addWidget(self.stack)
@@ -80,19 +81,16 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.horarios_page)
         self.stack.addWidget(self.student_page)
 
-        self.btn_asistencia.clicked.connect(lambda: self.ir_a_pagina(0))
-        self.btn_horarios.clicked.connect(lambda: self.ir_a_pagina(1))
-        self.btn_alumno.clicked.connect(lambda: self.ir_a_pagina(2))
+        self.btn_asistencia.clicked.connect(lambda: self.stack.setCurrentIndex(0))
+        self.btn_horarios.clicked.connect(lambda: self.stack.setCurrentIndex(1))
+        self.btn_alumno.clicked.connect(lambda: self.stack.setCurrentIndex(2))
+
+        # Requisito 5.3 y 5.4: Si se edita o termina la jornada, asegurar que la cámara se cierre
+        self.horarios_page.configuracion_cambiada.connect(self._al_cambiar_jornada)
 
         self.stack.setCurrentIndex(0)
 
-    def ir_a_pagina(self, indice):
-        # Si salimos de la página de asistencia (índice 0), apagar la cámara para liberar recursos
-        if self.stack.currentIndex() == 0 and indice != 0:
-            self.attendance_page.close_camera()
-        self.stack.setCurrentIndex(indice)
-
-    def closeEvent(self, event):
-        # Asegurar liberar la cámara si el usuario cierra la ventana principal
-        self.attendance_page.close_camera()
-        super().closeEvent(event)
+    def _al_cambiar_jornada(self):
+        if not self.horarios_page.is_configured():
+            if hasattr(self.attendance_page, "cerrar_camara"):
+                self.attendance_page.cerrar_camara()

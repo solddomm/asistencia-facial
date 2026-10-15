@@ -49,3 +49,29 @@ class StudentRepository:
 
             conn.commit()
             return alumno_id
+
+    def get_all_students_with_photos(self):
+        """
+        Devuelve la lista de alumnos con sus rutas de captura facial para generar embeddings.
+        """
+        query = """
+            SELECT a.id, a.nombre, a.apellido, cf.foto_frontal, cf.foto_izquierdo, cf.foto_derecho
+            FROM alumno a
+            INNER JOIN captura_facial cf ON a.id = cf.alumno_id;
+        """
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                rows = cur.fetchall()
+
+        alumnos = []
+        for r in rows:
+            alumnos.append({
+                "id": r[0],
+                "nombre": r[1],
+                "apellido": r[2],
+                "foto_frontal": r[3],
+                "foto_izquierdo": r[4],
+                "foto_derecho": r[5]
+            })
+        return alumnos
